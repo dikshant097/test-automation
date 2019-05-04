@@ -2,6 +2,7 @@ import java.net.URI;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -62,7 +63,7 @@ public class DatabaseConnector {
 			marks.forEach((k, v) -> {
 				k = k.toLowerCase();
 				String q = "insert into test_details values(" + testNo + "," + v.getClas() + ",'" + k + "','"
-						+ v.getTestName() + "'," + v.getThresholdMarks() + "," + v.getMaxMarks() + ",'"
+						+ v.getTestName().toLowerCase() + "'," + v.getThresholdMarks() + "," + v.getMaxMarks() + ",'"
 						+ v.getObtainedMarks() + "');";
 				try {
 					s.addBatch(q);
@@ -131,5 +132,86 @@ public class DatabaseConnector {
 
 		return result;
 	}
-
+	
+	public HashMap<String,String> getListToEdit(int clas, String ID){
+		
+		HashMap<String,String> marks = new HashMap<>();
+		String query = "";
+		try {
+			con = DriverManager.getConnection(dbUrl, props);
+			s = con.createStatement();
+			query = "select student_name, obtained from test_details where clas ="+clas+" and test_name='"+ID.toLowerCase()+"';";
+			rs=s.executeQuery(query);
+			while(rs.next())
+			{
+				marks.put(rs.getString(1), rs.getString(2));
+			}
+			s.close();
+			con.close();
+		}
+		catch(Exception e)
+		{
+			return null;
+		}
+		return marks;
+		
+	}
+	
+	public  int updateMarks(HashMap<String,String> marks, int clas , String id)
+	{
+		if(marks == null || marks.size() == 0)
+			return -1;
+		
+		try {
+			con = DriverManager.getConnection(dbUrl, props);
+			con.setAutoCommit(false);
+			s = con.createStatement();
+			
+			marks.forEach((k, v) -> {
+				String query = "update test_details set obtained='" + v + "' where student_name='" + k.toLowerCase() +"' and clas="+
+						clas + " and test_name='" + id.toLowerCase() +"';";
+				try {
+					s.addBatch(query);
+				} catch (SQLException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			});
+			
+			s.executeBatch();
+			con.commit();
+			s.close();
+			con.close();
+			
+		}catch(Exception e) 
+		{
+			return -1;
+		}
+		
+		return 1;
+	}
+	
+	public int startNewSession() {
+	
+		try {
+			con = DriverManager.getConnection(dbUrl, props);
+			con.setAutoCommit(false);
+			s = con.createStatement();
+			
+			String query = "delete from test_details where clas=12 or clas=11;";
+			s.addBatch(query);
+			query = " ALTER SEQUENCE test_no RESTART WITH 1;";
+			s.addBatch(query);
+			
+			s.executeBatch();
+			con.commit();
+			s.close();
+			con.close();
+		}
+		catch(Exception e) {
+			return -1;
+		}
+		
+		return 1;
+	}
 }

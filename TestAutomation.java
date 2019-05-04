@@ -27,10 +27,10 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 public class TestAutomation implements ActionListener, ItemListener {
 
 	private static JButton createTest, editTest, viewPerformance, newSession;
-	private static JFrame parentFrame, performanceFrame;
+	private static JFrame parentFrame, performanceFrame, editFrame;
 	private static JLabel welcomeLabel;
 	private static Dimension dim;
-	private static JDialog testSelector, performaceDailog;
+	private static JDialog testSelector, performaceDailog, editDailog, sessionDailog;
 	private static TestAutomation t;
 	private static String path;
 
@@ -91,13 +91,297 @@ public class TestAutomation implements ActionListener, ItemListener {
 		if (e.getSource() == createTest) {
 			openCreateTestFrame();
 		} else if (e.getSource() == newSession) {
-
+			openResetDailog();
 		} else if (e.getSource() == viewPerformance) {
 			openPerformanceFrame();
 		} else if (e.getSource() == editTest) {
-
+			openEditTestFrame();
 		}
 
+	}
+	
+	public static void openResetDailog() {
+		JPanel sessionPanel = new JPanel();
+		sessionPanel.setOpaque(false);
+		sessionPanel.setLayout(null);
+		sessionDailog = new JDialog(parentFrame, "Are you sure you want to start new session?");
+		JLabel IDLabel = new JLabel("Enter Any Number between 1-10:");
+		IDLabel.setBounds(5, 20, 200, 30);
+		sessionPanel.add(IDLabel);
+		JTextField id = new JTextField();
+		id.setBounds(200, 25, 50, 20);
+		sessionPanel.add(id);
+		JButton ok = new JButton("Proceed");
+		ok.setBounds(130, 65, 100, 30);
+		JLabel msg = new JLabel("");
+		msg.setBounds(10, 100, 280, 20);
+		msg.setForeground(Color.RED);
+		sessionPanel.add(msg);
+		
+		ok.addActionListener(new ActionListener() {
+
+			@Override
+			public void actionPerformed(ActionEvent arg0) {
+				
+				if(id.getText().equals(""))
+				{
+					msg.setText("Please enter a number");
+					return;
+				}
+				try {
+					int num = Integer.parseInt(id.getText());
+					if(num >=1 && num <=10)
+					{
+						new Thread(new Runnable() {
+
+							@Override
+							public void run() {
+								msg.setText("Please Wait...");
+								ok.setEnabled(false);
+								DatabaseConnector db = new DatabaseConnector();
+								int res = db.startNewSession();
+								ok.setEnabled(true);
+								if(res == -1)
+								{
+									msg.setText("Error Encountered.");
+								}
+								msg.setText("New Session started.");
+								return;
+								
+							}
+							
+						}).start();
+					}
+					msg.setText("Please enter a valid number");
+				}
+				catch(Exception e) {
+					msg.setText("Only numeric value is allowed");
+				}
+			}
+			
+		});
+		
+		sessionPanel.add(ok);
+		sessionDailog.add(sessionPanel);
+		sessionDailog.setSize(370, 180);
+		sessionDailog.setLocation(dim.width / 2 - sessionDailog.getSize().width / 2,
+				dim.height / 2 - sessionDailog.getSize().height / 2);
+		sessionDailog.setVisible(true);
+
+	}
+	
+	public static void openEditTestFrame() {
+		JPanel editPanel = new JPanel();
+		editPanel.setOpaque(false);
+		editPanel.setLayout(null);
+		editDailog = new JDialog(parentFrame, "Select Class");
+		JLabel clasLabel = new JLabel("Select Class:");
+		clasLabel.setBounds(5, 15, 90, 30);
+		editPanel.add(clasLabel);
+		JRadioButton class11 = new JRadioButton("11");
+		class11.setBounds(95, 5, 50, 50);
+		JRadioButton class12 = new JRadioButton("12");
+		class12.setBounds(150, 5, 50, 50);
+		ButtonGroup group = new ButtonGroup();
+		group.add(class11);
+		group.add(class12);
+		editPanel.add(class11);
+		editPanel.add(class12);
+		JLabel IDLabel = new JLabel("Enter Test ID:");
+		IDLabel.setBounds(5, 60, 110, 30);
+		editPanel.add(IDLabel);
+		JTextField id = new JTextField();
+		id.setBounds(120, 65, 150, 20);
+		editPanel.add(id);
+		JButton ok = new JButton("Proceed");
+		ok.setBounds(100, 105, 100, 30);
+		editPanel.add(ok);
+		JLabel msg = new JLabel("");
+		msg.setBounds(10, 140, 280, 20);
+		msg.setForeground(Color.RED);
+		editPanel.add(msg);
+		
+		ok.addActionListener(new ActionListener() {
+
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				if (!class11.isSelected() && !class12.isSelected()) {
+					msg.setText("Please select class");
+					return;
+				}
+				int clas;
+				if (class11.isSelected())
+					clas = 11;
+				else
+					clas = 12;
+				
+				if(id.getText().equals(""))
+				{
+					msg.setText("Please enter Test ID");
+					return;
+				}
+				
+				new Thread(new Runnable() {
+
+					@Override
+					public void run() {
+						
+						ok.setEnabled(false);
+						DatabaseConnector db = new DatabaseConnector();
+						HashMap<String,String> marks = db.getListToEdit(clas, id.getText());
+						ok.setEnabled(true);
+						if(marks == null || marks.size() == 0)
+						{
+							msg.setText("No results found");
+							return;
+						}
+						editDailog.dispose();
+						showEditFrame(marks,clas,id.getText().toLowerCase());
+					}
+				}).start();
+
+			}
+
+		});
+		
+		editDailog.setSize(320, 200);
+		editDailog.setLocation(dim.width / 2 - editDailog.getSize().width / 2,
+				dim.height / 2 - editDailog.getSize().height / 2);
+		editDailog.add(editPanel);
+		editDailog.setVisible(true);
+	}
+	
+	public static void showEditFrame(HashMap<String,String> marks, int clas,String id)
+	{
+			parentFrame.setVisible(false);
+			editFrame = new JFrame("Edit Marks");
+			editFrame.setResizable(false);
+			editFrame.setSize(500, 630);
+			editFrame.setLocation(dim.width / 2 - editFrame.getSize().width / 2,
+					dim.height / 2 - editFrame.getSize().height / 2);
+			
+
+			JTable tbl = new JTable() {
+				 public boolean isCellEditable(int row,int column) {
+					 if(column != 0)
+				        return true;
+					 return false;
+				}
+			};
+			tbl.setSize(500, 500);
+			
+			DefaultTableModel dtm = new DefaultTableModel(0, 0);
+
+			dtm.setColumnIdentifiers(new Object[] {"Names","Marks"});
+			
+			tbl.getTableHeader().setFont(new Font("SansSerif", Font.BOLD, 15));
+			tbl.setRowHeight(30);
+			tbl.setModel(dtm);
+			
+			for (Map.Entry mapElement : marks.entrySet()) {
+				String name = (String) mapElement.getKey();
+				String obMarks = (String) mapElement.getValue();
+				
+				dtm.addRow(new Object[] {name.toUpperCase(), obMarks});
+			}
+			
+			
+			JScrollPane js = new JScrollPane(tbl,JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+			js.setPreferredSize(new Dimension(500,500));
+			js.setVisible(true);
+			
+			JButton ok = new JButton("Submit");
+			ok.setBounds(200, 520, 100, 30);
+			JLabel msg = new JLabel("");
+			msg.setBounds(10, 550, 500, 20);
+			msg.setForeground(Color.RED);
+			editFrame.add(msg);
+			ok.addActionListener(new ActionListener() {
+
+				@Override
+				public void actionPerformed(ActionEvent arg0) {
+					
+					HashMap<String, String> updatedList = new HashMap<>();
+					for(int i= 0 ; i<dtm.getRowCount() ; i++) {
+						
+						String name = (String) tbl.getModel().getValueAt(i, 0);
+						String marks = (String) tbl.getModel().getValueAt(i, 1);
+						
+						updatedList.put(name, marks);
+					}
+					
+					DatabaseConnector db = new DatabaseConnector();
+					new Thread(new Runnable() {
+
+						@Override
+						public void run() {
+							ok.setEnabled(false);
+							int res = db.updateMarks(updatedList , clas, id);
+							ok.setEnabled(true);
+							if(res == -1)
+							{
+								msg.setText("Error updating marks");
+								return;
+							}
+							
+							msg.setText("Updated Successfully");
+						}
+						
+					}).start();
+				}
+				
+			});
+			editFrame.add(ok);
+			editFrame.getContentPane().add(js, BorderLayout.CENTER);
+			
+			editFrame.addWindowListener(new WindowListener() {
+
+				@Override
+				public void windowOpened(WindowEvent e) {
+					// TODO Auto-generated method stub
+
+				}
+
+				@Override
+				public void windowClosing(WindowEvent e) {
+					parentFrame.setVisible(true);
+
+				}
+
+				@Override
+				public void windowClosed(WindowEvent e) {
+					// TODO Auto-generated method stub
+
+				}
+
+				@Override
+				public void windowIconified(WindowEvent e) {
+					// TODO Auto-generated method stub
+
+				}
+
+				@Override
+				public void windowDeiconified(WindowEvent e) {
+					// TODO Auto-generated method stub
+
+				}
+
+				@Override
+				public void windowActivated(WindowEvent e) {
+					// TODO Auto-generated method stub
+
+				}
+
+				@Override
+				public void windowDeactivated(WindowEvent e) {
+					// TODO Auto-generated method stub
+
+				}
+
+			});
+			
+			editFrame.setVisible(true);
+			
 	}
 
 	public static void openPerformanceFrame() {
@@ -253,17 +537,26 @@ public class TestAutomation implements ActionListener, ItemListener {
 						typeOfCell.put("na", arr);
 					}
 				} else {
-					ob = ob + Float.parseFloat(row[i]);
-					total += t.getMaxMarks();
+					try {
 
-					if (Float.parseFloat(row[i]) < t.getThresholdMarks()) {
-						if (typeOfCell.containsKey("th")) {
-							typeOfCell.get("th").add(new CellLocation(rowNum, i));
-						} else {
-							ArrayList<CellLocation> arr = new ArrayList<>();
-							arr.add(new CellLocation(rowNum, i));
-							typeOfCell.put("th", arr);
+						ob = ob + Float.parseFloat(row[i]);
+						total += t.getMaxMarks();
+
+						if (Float.parseFloat(row[i]) < t.getThresholdMarks()) {
+							if (typeOfCell.containsKey("th")) {
+								typeOfCell.get("th").add(new CellLocation(rowNum, i));
+							} else {
+								ArrayList<CellLocation> arr = new ArrayList<>();
+								arr.add(new CellLocation(rowNum, i));
+								typeOfCell.put("th", arr);
+							}
 						}
+					
+					}
+					catch(Exception e)
+					{
+						i--;
+						break;
 					}
 				}
 
