@@ -1,5 +1,5 @@
 
-public class TestBean {
+public class TestBean implements Comparable<TestBean>{
 
 	String testName, obtainedMarks;
 	Float thresholdMarks, maxMarks;
@@ -51,6 +51,14 @@ public class TestBean {
 
 	public void setId(int id) {
 		this.id = id;
+	}
+
+	@Override
+	public int compareTo(TestBean arg) {
+		
+		if(arg.getId() < id)
+			return -1;
+		return 1;
 	}
 
 }

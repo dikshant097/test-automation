@@ -9,6 +9,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 import java.util.TreeMap;
+import java.util.TreeSet;
 
 import javax.swing.JProgressBar;
 
@@ -81,8 +82,8 @@ public class DatabaseConnector {
 		return res;
 	}
 
-	public TreeMap<String, ArrayList<TestBean>> getTests(int clas) {
-		TreeMap<String, ArrayList<TestBean>> result = new TreeMap<>();
+	public TreeMap<String, TreeSet<TestBean>> getTests(int clas) {
+		TreeMap<String, TreeSet<TestBean>> result = new TreeMap<>();
 
 		String query = "";
 		try {
@@ -101,7 +102,7 @@ public class DatabaseConnector {
 				if (result.containsKey(name)) {
 					result.get(name).add(test);
 				} else {
-					ArrayList<TestBean> arr = new ArrayList<>();
+					TreeSet<TestBean> arr = new TreeSet<>();
 					arr.add(test);
 					result.put(name, arr);
 				}
@@ -117,7 +118,7 @@ public class DatabaseConnector {
 					test.setId(rs.getInt(1));
 					test.setTestName(rs.getString(2));
 					test.setObtainedMarks("na");
-					((ArrayList<TestBean>) mapElement.getValue()).add(test);
+					((TreeSet<TestBean>) mapElement.getValue()).add(test);
 
 				}
 			}

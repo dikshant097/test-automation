@@ -9,12 +9,13 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.TreeSet;
+import java.util.Iterator;
 
 import javax.swing.*;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableColumnModel;
-import javax.swing.text.html.HTMLDocument.Iterator;
 
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellValue;
@@ -136,13 +137,14 @@ public class TestAutomation implements ActionListener, ItemListener {
 					clas = 11;
 				else
 					clas = 12;
+				
 				new Thread(new Runnable() {
 
 					@Override
 					public void run() {
 						DatabaseConnector db = new DatabaseConnector();
 						ok.setEnabled(false);
-						TreeMap<String, ArrayList<TestBean>> result = db.getTests(clas);
+						TreeMap<String, TreeSet<TestBean>> result = db.getTests(clas);
 						if (result == null || result.size() == 0) {
 							msg.setText("No Results found");
 							ok.setEnabled(true);
@@ -165,7 +167,7 @@ public class TestAutomation implements ActionListener, ItemListener {
 		performaceDailog.setVisible(true);
 	}
 
-	public static void viewPerformanceFrame(int clas, TreeMap<String, ArrayList<TestBean>> result) {
+	public static void viewPerformanceFrame(int clas, TreeMap<String, TreeSet<TestBean>> result) {
 		parentFrame.setVisible(false);
 		performanceFrame = new JFrame("Performance Analysis");
 		performanceFrame.setResizable(false);
@@ -180,40 +182,39 @@ public class TestAutomation implements ActionListener, ItemListener {
 					return Object.class;
 				return super.getColumnClass(column);
 			}
+			 public boolean isCellEditable(int row,int column) {
+			        return false;
+			}
 		};
-		tbl.setSize(dim.width - 100, dim.height);
+		tbl.setSize((int) (dim.width *0.9), (int) (dim.height *0.9));
+		tbl.setAutoResizeMode( JTable.AUTO_RESIZE_OFF );
+		
+		
 		DefaultTableModel dtm = new DefaultTableModel(0, 0);
-
-		for (Map.Entry mapElement : result.entrySet()) {
-			String name = (String) mapElement.getKey();
-			ArrayList<TestBean> tests = ((ArrayList<TestBean>) mapElement.getValue());
-			tests.sort(new Comparator() {
-				@Override
-				public int compare(Object o1, Object o2) {
-
-					return ((TestBean) o2).getId() - ((TestBean) o1).getId();
-				}
-
-			});
-		}
 
 		Map.Entry element = result.entrySet().iterator().next();
 		String key = (String) element.getKey();
-		ArrayList<TestBean> test_names = ((ArrayList<TestBean>) element.getValue());
+		TreeSet<TestBean> test_names = ((TreeSet<TestBean>) element.getValue());
 		String testCols[] = new String[test_names.size() + 2];
 		int i = 0;
 		testCols[i] = "names".toUpperCase();
 		i++;
 		testCols[i] = "Percentage".toUpperCase();
 		i++;
-		for (int j = 0; j < test_names.size(); j++, i++) {
-			testCols[i] = test_names.get(j).getTestName().toUpperCase() + " (" + test_names.get(j).getMaxMarks() + ")";
+		Iterator it =  test_names.iterator(); 
+		while (it.hasNext() ) {
+			TestBean t = (TestBean) it.next();
+			testCols[i] = t.getTestName().toUpperCase() + " (" + t.getMaxMarks() + ")";
+			i++;
 		}
 		dtm.setColumnIdentifiers(testCols);
+		
 		tbl.getTableHeader().setFont(new Font("SansSerif", Font.BOLD, 15));
 		tbl.setBounds(0, 0, dim.width - 100, dim.height);
 		tbl.setRowHeight(30);
 		tbl.setModel(dtm);
+		
+		
 		int rowNum = 0;
 		HashMap<String, ArrayList<CellLocation>> typeOfCell = new HashMap<>();
 		for (Map.Entry mapElement : result.entrySet()) {
@@ -224,11 +225,13 @@ public class TestAutomation implements ActionListener, ItemListener {
 			i += 2;
 			float total = 0.0f, ob = 0.0f;
 			int per;
-			ArrayList<TestBean> tests = (ArrayList<TestBean>) mapElement.getValue();
-			for (int k = 0; k < tests.size(); i++, k++) {
-				row[i] = tests.get(k).getObtainedMarks();
+			TreeSet<TestBean> tests = (TreeSet<TestBean>) mapElement.getValue();
+			
+			for (Iterator k = tests.iterator(); k.hasNext(); i++) {
+				TestBean t = (TestBean) k.next();
+				row[i] = t.getObtainedMarks();
 				if (row[i].equalsIgnoreCase("ab")) {
-					total += tests.get(k).getMaxMarks();
+					total += t.getMaxMarks();
 					row[i] = row[i].toUpperCase();
 
 					if (typeOfCell.containsKey("ab")) {
@@ -251,9 +254,9 @@ public class TestAutomation implements ActionListener, ItemListener {
 					}
 				} else {
 					ob = ob + Float.parseFloat(row[i]);
-					total += tests.get(k).getMaxMarks();
+					total += t.getMaxMarks();
 
-					if (ob < tests.get(k).getThresholdMarks()) {
+					if (Float.parseFloat(row[i]) < t.getThresholdMarks()) {
 						if (typeOfCell.containsKey("th")) {
 							typeOfCell.get("th").add(new CellLocation(rowNum, i));
 						} else {
@@ -288,11 +291,19 @@ public class TestAutomation implements ActionListener, ItemListener {
 			dtm.addRow(row);
 			rowNum++;
 		}
-		tbl.setDefaultRenderer(Object.class, new CellRenderer(typeOfCell));
-		JScrollPane js = new JScrollPane(tbl);
+		for(int j=0 ;j < tbl.getColumnModel().getColumnCount() ; j++)
+		{
+			tbl.getColumnModel().getColumn(j).setPreferredWidth((int) ((dim.width - 100)/6));
+		}
+		
+		CellRenderer cellRenderer = new CellRenderer(typeOfCell);
+		tbl.setDefaultRenderer(Object.class, cellRenderer);
+		JScrollPane js = new JScrollPane(tbl,JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+		js.setPreferredSize(new Dimension((int) (dim.width *0.9), (int) (dim.height *0.9)));
 		js.setVisible(true);
 
 		performanceFrame.getContentPane().add(js, BorderLayout.CENTER);
+		performanceFrame.pack();
 		performanceFrame.addWindowListener(new WindowListener() {
 
 			@Override

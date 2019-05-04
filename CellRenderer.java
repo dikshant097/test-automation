@@ -4,6 +4,7 @@ import java.awt.Font;
 import java.util.ArrayList;
 import java.util.HashMap;
 
+import javax.swing.JLabel;
 import javax.swing.JTable;
 import javax.swing.table.DefaultTableCellRenderer;
 
@@ -11,7 +12,7 @@ import javax.swing.table.DefaultTableCellRenderer;
  * color for cells
  * NA-Black
  * AB-BLUE
- * Below Threshold-Red
+ * Below Threshold-orange
  * Percentage < 60-yellow
  * Percentage < 50-Red
  * */
@@ -39,18 +40,59 @@ public class CellRenderer extends DefaultTableCellRenderer {
 	@Override
 	public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus,
 			int row, int column) {
-		Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+		JLabel l = (JLabel) super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
 		if (row >= 0 && column == 0) {
-			c.setFont(new Font("Arial Black", Font.BOLD, 15));
-			c.setForeground(Color.BLACK);
-		} else if (((String) value).equalsIgnoreCase("ab")) {
-			c.setBackground(Color.BLACK);
-
-		} /*
-			 * else if (ab.contains(new CellLocation(row, column))) { //
-			 * c.setBackground(Color.BLUE); c.setForeground(Color.WHITE); }
-			 */
-		return c;
+			l.setFont(new Font("Arial Black", Font.BOLD, 14));
+			l.setForeground(Color.BLACK);
+			l.setBackground(Color.WHITE);
+			setHorizontalAlignment(JLabel.LEFT);
+		} else if (((String) value).equalsIgnoreCase("")) {
+			l.setFont(new Font("SansSerif", Font.BOLD, 13));
+			l.setBackground(Color.BLACK);
+			l.setForeground(Color.BLACK);
+			setHorizontalAlignment(JLabel.CENTER);
+		}  else if (((String) value).equalsIgnoreCase("ab")) {
+			l.setFont(new Font("SansSerif", Font.BOLD, 13));
+			  l.setBackground(Color.BLUE);
+			  l.setForeground(Color.WHITE);
+			  setHorizontalAlignment(JLabel.CENTER);
+		}
+		else if( below50.contains(new CellLocation(row,column)))
+		{
+			l.setFont(new Font("SansSerif", Font.BOLD, 13));
+			l.setBackground(Color.RED);
+			l.setForeground(Color.BLACK);
+			setHorizontalAlignment(JLabel.CENTER);
+		}
+		else if( below60.contains(new CellLocation(row,column)))
+		{
+			l.setFont(new Font("SansSerifk", Font.BOLD, 13));
+			l.setBackground(Color.YELLOW);
+			l.setForeground(Color.BLACK);
+			setHorizontalAlignment(JLabel.CENTER);
+		}
+		else if( th.contains(new CellLocation(row,column)))
+		{
+			l.setFont(new Font("SansSerif", Font.BOLD, 13));
+			l.setBackground(Color.ORANGE);
+			l.setForeground(Color.BLACK);
+			setHorizontalAlignment(JLabel.CENTER);
+		}
+		else {
+			l.setFont(new Font("SansSerif", Font.BOLD, 13));
+			l.setBackground(Color.GREEN);
+			l.setForeground(Color.BLACK); 
+			setHorizontalAlignment(JLabel.CENTER);
+		}
+		
+		if(isSelected) {
+			l.setFont(new Font("Arial Black", Font.BOLD, 16));
+			l.setBackground(Color.CYAN);
+			l.setForeground(Color.BLACK);
+			
+		}
+			 
+		return l;
 	}
 
 }

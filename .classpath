@@ -2,8 +2,8 @@
 <classpath>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.8"/>
 	<classpathentry kind="src" path=""/>
-	<classpathentry kind="lib" path="/home/magicpin123/Android Projects/AndroidReadXLSX/aa-poi-3.10-min-0.1.5.jar"/>
-	<classpathentry kind="lib" path="/home/magicpin123/Android Projects/AndroidReadXLSX/aa-poi-ooxml-schemas-3.10-reduced-more-0.1.5.jar"/>
-	<classpathentry kind="lib" path="/home/magicpin123/Downloads/postgresql-42.2.5.jar"/>
+	<classpathentry kind="lib" path="C:/Users/Dikshant Manocha/eclipse-workspace/Test Automation/test-automation/aa-poi-3.10-min-0.1.5.jar"/>
+	<classpathentry kind="lib" path="C:/Users/Dikshant Manocha/eclipse-workspace/Test Automation/test-automation/aa-poi-ooxml-schemas-3.10-reduced-more-0.1.5.jar"/>
+	<classpathentry kind="lib" path="C:/Users/Dikshant Manocha/eclipse-workspace/Test Automation/test-automation/postgresql-42.2.5.jar"/>
 	<classpathentry kind="output" path=""/>
 </classpath>
