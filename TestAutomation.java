@@ -42,9 +42,7 @@ public class TestAutomation implements ActionListener, ItemListener {
 		parentFrame.setTitle("Sareen's Classes Test Details");
 		welcomeLabel = new JLabel("Sareen's Classes");
 		welcomeLabel.setForeground(Color.RED);
-		welcomeLabel.setFont(new Font("Serif", Font.BOLD, 40));
-		welcomeLabel.setBounds(160, 10, 400, 50);
-		parentFrame.add(welcomeLabel);
+		welcomeLabel.setFont(new Font("Serif", Font.BOLD, 80));
 
 		createTest = new JButton("Create New Test");
 		createTest.setBounds(200, 100, 300, 50);
@@ -66,6 +64,10 @@ public class TestAutomation implements ActionListener, ItemListener {
 		dim = Toolkit.getDefaultToolkit().getScreenSize();
 		parentFrame.setLocation(dim.width / 2 - parentFrame.getSize().width / 2,
 				dim.height / 2 - parentFrame.getSize().height / 2);
+		
+		welcomeLabel.setSize(700,100);
+		welcomeLabel.setHorizontalAlignment(JLabel.CENTER);
+		parentFrame.add(welcomeLabel);
 		parentFrame.setLayout(null);
 		parentFrame.setVisible(true);
 	}
@@ -483,7 +485,7 @@ public class TestAutomation implements ActionListener, ItemListener {
 		int i = 0;
 		testCols[i] = "names".toUpperCase();
 		i++;
-		testCols[i] = "Percentage".toUpperCase();
+		testCols[i] = "%";
 		i++;
 		Iterator it =  test_names.iterator(); 
 		while (it.hasNext() ) {
@@ -555,7 +557,6 @@ public class TestAutomation implements ActionListener, ItemListener {
 					}
 					catch(Exception e)
 					{
-						i--;
 						break;
 					}
 				}
@@ -586,7 +587,14 @@ public class TestAutomation implements ActionListener, ItemListener {
 		}
 		for(int j=0 ;j < tbl.getColumnModel().getColumnCount() ; j++)
 		{
+			if(j==0) {
 			tbl.getColumnModel().getColumn(j).setPreferredWidth((int) ((dim.width - 100)/6));
+			}
+			else
+			{
+				tbl.getColumnModel().getColumn(j).setPreferredWidth((int) ((dim.width - 100)/12));
+			}
+			
 		}
 		
 		CellRenderer cellRenderer = new CellRenderer(typeOfCell);
@@ -789,7 +797,9 @@ public class TestAutomation implements ActionListener, ItemListener {
 						String res = db.writeMarks(marks);
 						msg.setText(res);
 						ok.setEnabled(true);
-
+						if(res.equals("Data saved Successfully")) {
+							testSelector.dispose();
+						}
 					}
 				}).start();
 
