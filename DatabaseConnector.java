@@ -28,7 +28,7 @@ public class DatabaseConnector {
 		super();
 		try {
 			dbUri = new URI(
-					"postgres://tgajkqffcqbuuf:4b323c6ddf6734c206b808623fcb289e2260a8872689c3f458c21ef7cbff5213@ec2-54-197-234-117.compute-1.amazonaws.com:5432/dd546iqmle846b");
+					"postgres://opuupnszpiiwxz:548aa8c2f87928d4240de730df201bf5abb09c05000f6de54b100516d435f7b3@ec2-54-225-116-36.compute-1.amazonaws.com:5432/dfcv2s1haop74d");
 			Class.forName("org.postgresql.Driver");
 			username = dbUri.getUserInfo().split(":")[0];
 			password = dbUri.getUserInfo().split(":")[1];
@@ -133,9 +133,9 @@ public class DatabaseConnector {
 		return result;
 	}
 	
-	public HashMap<String,String> getListToEdit(int clas, String ID){
+	public TreeMap<String,String> getListToEdit(int clas, String ID){
 		
-		HashMap<String,String> marks = new HashMap<>();
+		TreeMap<String,String> marks = new TreeMap<>();
 		String query = "";
 		try {
 			con = DriverManager.getConnection(dbUrl, props);

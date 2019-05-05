@@ -74,7 +74,7 @@ public class CellRenderer extends DefaultTableCellRenderer {
 		else if( th.contains(new CellLocation(row,column)))
 		{
 			l.setFont(new Font("SansSerif", Font.BOLD, 13));
-			l.setBackground(Color.ORANGE);
+			l.setBackground(Color.RED);
 			l.setForeground(Color.BLACK);
 			setHorizontalAlignment(JLabel.CENTER);
 		}

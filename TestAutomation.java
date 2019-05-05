@@ -2,7 +2,10 @@ import java.awt.*;
 import java.awt.event.*;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -26,13 +29,14 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
 public class TestAutomation implements ActionListener, ItemListener {
 
-	private static JButton createTest, editTest, viewPerformance, newSession;
+	private static JButton createTest, editTest, viewPerformance, newSession, localCopy;
 	private static JFrame parentFrame, performanceFrame, editFrame;
-	private static JLabel welcomeLabel;
+	private static JLabel welcomeLabel,parentMsg;
 	private static Dimension dim;
 	private static JDialog testSelector, performaceDailog, editDailog, sessionDailog;
 	private static TestAutomation t;
 	private static String path;
+	public static HashMap<String, ArrayList<CellLocation>> typeOfCell = new HashMap<>();
 
 	public TestAutomation() {
 
@@ -55,12 +59,20 @@ public class TestAutomation implements ActionListener, ItemListener {
 		viewPerformance = new JButton("View Performance");
 		viewPerformance.setBounds(200, 300, 300, 50);
 		parentFrame.add(viewPerformance);
+		
+		localCopy = new JButton("View Local Copy");
+		localCopy.setBounds(200, 400, 300, 50);
+		parentFrame.add(localCopy);
 
 		newSession = new JButton("Start New Session");
-		newSession.setBounds(200, 400, 300, 50);
+		newSession.setBounds(200, 500, 300, 50);
 		parentFrame.add(newSession);
+		
+		parentMsg = new JLabel("");
+		parentMsg.setForeground(Color.RED);
+		parentMsg.setBounds(10, 580, 500, 20);
 
-		parentFrame.setSize(700, 600);
+		parentFrame.setSize(700, 650);
 		dim = Toolkit.getDefaultToolkit().getScreenSize();
 		parentFrame.setLocation(dim.width / 2 - parentFrame.getSize().width / 2,
 				dim.height / 2 - parentFrame.getSize().height / 2);
@@ -68,6 +80,7 @@ public class TestAutomation implements ActionListener, ItemListener {
 		welcomeLabel.setSize(700,100);
 		welcomeLabel.setHorizontalAlignment(JLabel.CENTER);
 		parentFrame.add(welcomeLabel);
+		parentFrame.add(parentMsg);
 		parentFrame.setLayout(null);
 		parentFrame.setVisible(true);
 	}
@@ -79,6 +92,7 @@ public class TestAutomation implements ActionListener, ItemListener {
 		newSession.addActionListener(t);
 		viewPerformance.addActionListener(t);
 		editTest.addActionListener(t);
+		localCopy.addActionListener(t);
 	}
 
 	@Override
@@ -95,9 +109,11 @@ public class TestAutomation implements ActionListener, ItemListener {
 		} else if (e.getSource() == newSession) {
 			openResetDailog();
 		} else if (e.getSource() == viewPerformance) {
-			openPerformanceFrame();
+			openPerformanceFrame(true);
 		} else if (e.getSource() == editTest) {
 			openEditTestFrame();
+		} else if (e.getSource() == localCopy) {
+			openPerformanceFrame(false);
 		}
 
 	}
@@ -230,7 +246,7 @@ public class TestAutomation implements ActionListener, ItemListener {
 						
 						ok.setEnabled(false);
 						DatabaseConnector db = new DatabaseConnector();
-						HashMap<String,String> marks = db.getListToEdit(clas, id.getText());
+						TreeMap<String,String> marks = db.getListToEdit(clas, id.getText());
 						ok.setEnabled(true);
 						if(marks == null || marks.size() == 0)
 						{
@@ -253,7 +269,7 @@ public class TestAutomation implements ActionListener, ItemListener {
 		editDailog.setVisible(true);
 	}
 	
-	public static void showEditFrame(HashMap<String,String> marks, int clas,String id)
+	public static void showEditFrame(TreeMap<String,String> marks, int clas,String id)
 	{
 			parentFrame.setVisible(false);
 			editFrame = new JFrame("Edit Marks");
@@ -271,6 +287,7 @@ public class TestAutomation implements ActionListener, ItemListener {
 				}
 			};
 			tbl.setSize(500, 500);
+			tbl.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
 			
 			DefaultTableModel dtm = new DefaultTableModel(0, 0);
 
@@ -287,6 +304,10 @@ public class TestAutomation implements ActionListener, ItemListener {
 				dtm.addRow(new Object[] {name.toUpperCase(), obMarks});
 			}
 			
+			for(int i=0 ; i<dtm.getColumnCount();i++)
+			{
+				tbl.getColumnModel().getColumn(i).setPreferredWidth(230);
+			}
 			
 			JScrollPane js = new JScrollPane(tbl,JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
 			js.setPreferredSize(new Dimension(500,500));
@@ -295,9 +316,9 @@ public class TestAutomation implements ActionListener, ItemListener {
 			JButton ok = new JButton("Submit");
 			ok.setBounds(200, 520, 100, 30);
 			JLabel msg = new JLabel("");
-			msg.setBounds(10, 550, 500, 20);
+			msg.setBounds(10, 550, 500, 50);
 			msg.setForeground(Color.RED);
-			editFrame.add(msg);
+			editFrame.getContentPane().add(msg,BorderLayout.PAGE_END);
 			ok.addActionListener(new ActionListener() {
 
 				@Override
@@ -333,9 +354,8 @@ public class TestAutomation implements ActionListener, ItemListener {
 				}
 				
 			});
-			editFrame.add(ok);
-			editFrame.getContentPane().add(js, BorderLayout.CENTER);
-			
+			editFrame.getContentPane().add(ok,BorderLayout.SOUTH);
+			editFrame.getContentPane().add(js, BorderLayout.NORTH);
 			editFrame.addWindowListener(new WindowListener() {
 
 				@Override
@@ -386,7 +406,7 @@ public class TestAutomation implements ActionListener, ItemListener {
 			
 	}
 
-	public static void openPerformanceFrame() {
+	public static void openPerformanceFrame(boolean goToServer) {
 		JPanel performacePanel = new JPanel();
 		performacePanel.setOpaque(false);
 		performacePanel.setLayout(null);
@@ -424,23 +444,76 @@ public class TestAutomation implements ActionListener, ItemListener {
 				else
 					clas = 12;
 				
-				new Thread(new Runnable() {
+				if(goToServer)
+				{
+					new Thread(new Runnable() {
 
-					@Override
-					public void run() {
-						DatabaseConnector db = new DatabaseConnector();
-						ok.setEnabled(false);
-						TreeMap<String, TreeSet<TestBean>> result = db.getTests(clas);
-						if (result == null || result.size() == 0) {
-							msg.setText("No Results found");
-							ok.setEnabled(true);
-							return;
-						} else {
-							performaceDailog.dispose();
-							viewPerformanceFrame(clas, result);
+						@Override
+						public void run() {
+							DatabaseConnector db = new DatabaseConnector();
+							ok.setEnabled(false);
+							TreeMap<String, TreeSet<TestBean>> result = db.getTests(clas);
+							if (result == null || result.size() == 0) {
+								msg.setText("No Results found");
+								ok.setEnabled(true);
+								return;
+							} else {
+								performaceDailog.dispose();
+								viewPerformanceFrame(clas, result);
+								try {
+									File file;
+									if( clas == 11)
+										file = new File("Local Copy 11.txt");
+									else
+										file = new File("Local Copy 12.txt");
+							        FileOutputStream f = new FileOutputStream(file);
+							        ObjectOutputStream s = new ObjectOutputStream(f);
+							        s.writeObject(result);
+							        s.close();
+								}
+								catch(Exception e)
+								{
+									System.out.println(e.getMessage());
+								}
+							}
 						}
+					}).start();
+				} else
+				{
+					try {
+						File file;
+						if( clas == 11)
+							file = new File("Local Copy 11.txt");
+						else
+							file = new File("Local Copy 12.txt");
+					    FileInputStream f = new FileInputStream(file);
+					    ObjectInputStream s = new ObjectInputStream(f);
+					    TreeMap<String, TreeSet<TestBean>> result = (TreeMap<String, TreeSet<TestBean>>) s.readObject();
+					    s.close();
+					    performaceDailog.dispose();
+					    viewPerformanceFrame(clas, result);
 					}
-				}).start();
+					catch(Exception ex)
+					{
+						performaceDailog.dispose();
+						parentMsg.setText("Error loading local copy");
+						new Thread(new Runnable() {
+
+							@Override
+							public void run() {
+								try {
+									Thread.sleep(5000);
+								} catch (InterruptedException e) {
+									// TODO Auto-generated catch block
+									e.printStackTrace();
+								}
+								parentMsg.setText("");
+							}
+							
+						}).start();
+					}
+					
+				}
 
 			}
 
@@ -500,91 +573,46 @@ public class TestAutomation implements ActionListener, ItemListener {
 		tbl.setRowHeight(30);
 		tbl.setModel(dtm);
 		
-		
-		int rowNum = 0;
-		HashMap<String, ArrayList<CellLocation>> typeOfCell = new HashMap<>();
+		TreeMap<String, TreeSet<TestBean>> below50 = new TreeMap<>() ,below60 = new TreeMap<>() ,toppers = new TreeMap<>() ;
 		for (Map.Entry mapElement : result.entrySet()) {
-
-			String row[] = new String[testCols.length];
-			i = 0;
-			row[i] = ((String) mapElement.getKey()).toUpperCase();
-			i += 2;
+			
 			float total = 0.0f, ob = 0.0f;
 			int per;
 			TreeSet<TestBean> tests = (TreeSet<TestBean>) mapElement.getValue();
 			
 			for (Iterator k = tests.iterator(); k.hasNext(); i++) {
 				TestBean t = (TestBean) k.next();
-				row[i] = t.getObtainedMarks();
-				if (row[i].equalsIgnoreCase("ab")) {
+				 
+				if(t.getObtainedMarks().equalsIgnoreCase("ab"))
+				{
 					total += t.getMaxMarks();
-					row[i] = row[i].toUpperCase();
-
-					if (typeOfCell.containsKey("ab")) {
-						typeOfCell.get("ab").add(new CellLocation(rowNum, i));
-					} else {
-						ArrayList<CellLocation> arr = new ArrayList<>();
-						arr.add(new CellLocation(rowNum, i));
-						typeOfCell.put("ab", arr);
-					}
-
-				} else if (row[i].equalsIgnoreCase("na")) {
-					row[i] = "";
-
-					if (typeOfCell.containsKey("na")) {
-						typeOfCell.get("na").add(new CellLocation(rowNum, i));
-					} else {
-						ArrayList<CellLocation> arr = new ArrayList<>();
-						arr.add(new CellLocation(rowNum, i));
-						typeOfCell.put("na", arr);
-					}
-				} else {
-					try {
-
-						ob = ob + Float.parseFloat(row[i]);
-						total += t.getMaxMarks();
-
-						if (Float.parseFloat(row[i]) < t.getThresholdMarks()) {
-							if (typeOfCell.containsKey("th")) {
-								typeOfCell.get("th").add(new CellLocation(rowNum, i));
-							} else {
-								ArrayList<CellLocation> arr = new ArrayList<>();
-								arr.add(new CellLocation(rowNum, i));
-								typeOfCell.put("th", arr);
-							}
-						}
-					
-					}
-					catch(Exception e)
-					{
-						break;
-					}
 				}
-
+				else if( !t.getObtainedMarks().equalsIgnoreCase("na")) {
+					ob += Float.parseFloat(t.getObtainedMarks());
+					total += t.getMaxMarks();
+				}
 			}
-			total = (ob / total);
+			total = ob / total;
 			per = (int) (total * 100);
-			row[1] = String.valueOf(per + "%");
-			if (per <= 50) {
-				if (typeOfCell.containsKey("50")) {
-					typeOfCell.get("50").add(new CellLocation(rowNum, 1));
-				} else {
-					ArrayList<CellLocation> arr = new ArrayList<>();
-					arr.add(new CellLocation(rowNum, 1));
-					typeOfCell.put("50", arr);
-				}
-			} else if (per <= 60) {
-				if (typeOfCell.containsKey("60")) {
-					typeOfCell.get("60").add(new CellLocation(rowNum, 1));
-				} else {
-					ArrayList<CellLocation> arr = new ArrayList<>();
-					arr.add(new CellLocation(rowNum, 1));
-					typeOfCell.put("60", arr);
-				}
-			}
-			dtm.addRow(row);
-			rowNum++;
+			
+			
+			
+			if( per <= 50 )
+				below50.put((String)mapElement.getKey(), tests);
+			else if (per <= 60)
+				below60.put((String)mapElement.getKey(), tests);
+			else
+				toppers.put((String)mapElement.getKey(), tests);
 		}
+		
+		if(toppers.size() != 0)
+			makeRows(toppers,testCols,dtm,0);
+		if(below60.size() != 0)
+			makeRows(below60,testCols,dtm,toppers.size());
+		if(below50.size() != 0)
+			makeRows(below50,testCols,dtm,below60.size() + toppers.size());
+		
+		
 		for(int j=0 ;j < tbl.getColumnModel().getColumnCount() ; j++)
 		{
 			if(j==0) {
@@ -813,6 +841,93 @@ public class TestAutomation implements ActionListener, ItemListener {
 		testSelector.add(testPanel);
 		testSelector.setVisible(true);
 
+	}
+	
+	public static void makeRows(TreeMap<String, TreeSet<TestBean>> result, String testCols[], DefaultTableModel dtm, int rowNum)
+	{
+		 
+		for (Map.Entry mapElement : result.entrySet()) {
+			
+			String row[] = new String[testCols.length];
+			int i = 0;
+			row[i] = ((String) mapElement.getKey()).toUpperCase();
+			i += 2;
+			float total = 0.0f, ob = 0.0f;
+			int per;
+			TreeSet<TestBean> tests = (TreeSet<TestBean>) mapElement.getValue();
+			
+			for (Iterator k = tests.iterator(); k.hasNext(); i++) {
+				TestBean t = (TestBean) k.next();
+				row[i] = t.getObtainedMarks();
+				if (row[i].equalsIgnoreCase("ab")) {
+					total += t.getMaxMarks();
+					row[i] = row[i].toUpperCase();
+
+					if (typeOfCell.containsKey("ab")) {
+						typeOfCell.get("ab").add(new CellLocation(rowNum, i));
+					} else {
+						ArrayList<CellLocation> arr = new ArrayList<>();
+						arr.add(new CellLocation(rowNum, i));
+						typeOfCell.put("ab", arr);
+					}
+
+				} else if (row[i].equalsIgnoreCase("na")) {
+					row[i] = "";
+
+					if (typeOfCell.containsKey("na")) {
+						typeOfCell.get("na").add(new CellLocation(rowNum, i));
+					} else {
+						ArrayList<CellLocation> arr = new ArrayList<>();
+						arr.add(new CellLocation(rowNum, i));
+						typeOfCell.put("na", arr);
+					}
+				} else {
+					try {
+
+						ob = ob + Float.parseFloat(row[i]);
+						total += t.getMaxMarks();
+
+						if (Float.parseFloat(row[i]) < t.getThresholdMarks()) {
+							if (typeOfCell.containsKey("th")) {
+								typeOfCell.get("th").add(new CellLocation(rowNum, i));
+							} else {
+								ArrayList<CellLocation> arr = new ArrayList<>();
+								arr.add(new CellLocation(rowNum, i));
+								typeOfCell.put("th", arr);
+							}
+						}
+					
+					}
+					catch(Exception e)
+					{
+						break;
+					}
+				}
+
+			}
+			total = (ob / total);
+			per = (int) (total * 100);
+			row[1] = String.valueOf(per + "%");
+			if (per <= 50) {
+				if (typeOfCell.containsKey("50")) {
+					typeOfCell.get("50").add(new CellLocation(rowNum, 1));
+				} else {
+					ArrayList<CellLocation> arr = new ArrayList<>();
+					arr.add(new CellLocation(rowNum, 1));
+					typeOfCell.put("50", arr);
+				}
+			} else if (per <= 60) {
+				if (typeOfCell.containsKey("60")) {
+					typeOfCell.get("60").add(new CellLocation(rowNum, 1));
+				} else {
+					ArrayList<CellLocation> arr = new ArrayList<>();
+					arr.add(new CellLocation(rowNum, 1));
+					typeOfCell.put("60", arr);
+				}
+			}
+			dtm.addRow(row);
+			rowNum++;
+		}
 	}
 
 }

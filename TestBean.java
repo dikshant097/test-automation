@@ -1,9 +1,10 @@
+import java.io.Serializable;
 
-public class TestBean implements Comparable<TestBean>{
+public class TestBean implements Comparable<TestBean>, Serializable{
 
-	String testName, obtainedMarks;
-	Float thresholdMarks, maxMarks;
-	int clas, id;
+	public String testName, obtainedMarks;
+	public Float thresholdMarks, maxMarks;
+	public int clas, id;
 
 	public Float getMaxMarks() {
 		return maxMarks;
