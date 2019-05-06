@@ -61,7 +61,11 @@ public class DatabaseConnector {
 				return "Server Error. Please try later.";
 			}
 			marks.forEach((k, v) -> {
-				k = k.toLowerCase();
+				
+			if(k==null || k.equals("") || v.getObtainedMarks()==null ) {
+				return;
+			}
+			k = k.toLowerCase();
 				String q = "insert into test_details values(" + testNo + "," + v.getClas() + ",'" + k + "','"
 						+ v.getTestName().toLowerCase() + "'," + v.getThresholdMarks() + "," + v.getMaxMarks() + ",'"
 						+ v.getObtainedMarks() + "');";
@@ -110,7 +114,7 @@ public class DatabaseConnector {
 			}
 			for (Map.Entry mapElement : result.entrySet()) {
 				String name = (String) mapElement.getKey();
-				query = "select distinct(sno),test_name from test_details where sno not in"
+				query = "select distinct(sno),test_name,mm from test_details where clas="+ clas +" and sno not in"
 						+ " (select sno from test_details where clas=" + clas + " and student_name='"
 						+ name.toLowerCase() + "');";
 				rs = s.executeQuery(query);
@@ -119,6 +123,7 @@ public class DatabaseConnector {
 					test.setId(rs.getInt(1));
 					test.setTestName(rs.getString(2));
 					test.setObtainedMarks("na");
+					test.setMaxMarks(rs.getFloat(3));
 					((TreeSet<TestBean>) mapElement.getValue()).add(test);
 
 				}

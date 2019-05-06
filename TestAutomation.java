@@ -127,7 +127,7 @@ public class TestAutomation implements ActionListener, ItemListener {
 		IDLabel.setBounds(5, 20, 200, 30);
 		sessionPanel.add(IDLabel);
 		JTextField id = new JTextField();
-		id.setBounds(200, 25, 50, 20);
+		id.setBounds(230, 25, 50, 20);
 		sessionPanel.add(id);
 		JButton ok = new JButton("Proceed");
 		ok.setBounds(130, 65, 100, 30);
@@ -459,7 +459,6 @@ public class TestAutomation implements ActionListener, ItemListener {
 								return;
 							} else {
 								performaceDailog.dispose();
-								viewPerformanceFrame(clas, result);
 								try {
 									File file;
 									if( clas == 11)
@@ -470,11 +469,13 @@ public class TestAutomation implements ActionListener, ItemListener {
 							        ObjectOutputStream s = new ObjectOutputStream(f);
 							        s.writeObject(result);
 							        s.close();
+							        f.close();
 								}
 								catch(Exception e)
 								{
 									System.out.println(e.getMessage());
 								}
+								viewPerformanceFrame(clas, result);
 							}
 						}
 					}).start();
@@ -490,6 +491,7 @@ public class TestAutomation implements ActionListener, ItemListener {
 					    ObjectInputStream s = new ObjectInputStream(f);
 					    TreeMap<String, TreeSet<TestBean>> result = (TreeMap<String, TreeSet<TestBean>>) s.readObject();
 					    s.close();
+					    f.close();
 					    performaceDailog.dispose();
 					    viewPerformanceFrame(clas, result);
 					}
@@ -563,7 +565,10 @@ public class TestAutomation implements ActionListener, ItemListener {
 		Iterator it =  test_names.iterator(); 
 		while (it.hasNext() ) {
 			TestBean t = (TestBean) it.next();
-			testCols[i] = t.getTestName().toUpperCase() + " (" + t.getMaxMarks() + ")";
+			if(t.getMaxMarks() != null)
+				testCols[i] = t.getTestName().toUpperCase() + " (" + t.getMaxMarks() + ")";
+			else
+				testCols[i] = t.getTestName().toUpperCase();
 			i++;
 		}
 		dtm.setColumnIdentifiers(testCols);
@@ -583,11 +588,11 @@ public class TestAutomation implements ActionListener, ItemListener {
 			for (Iterator k = tests.iterator(); k.hasNext(); i++) {
 				TestBean t = (TestBean) k.next();
 				 
-				if(t.getObtainedMarks().equalsIgnoreCase("ab"))
+				if(t.getObtainedMarks().equalsIgnoreCase("ab") || t.getObtainedMarks().equalsIgnoreCase("b") || t.getObtainedMarks().equalsIgnoreCase("a"))
 				{
 					total += t.getMaxMarks();
 				}
-				else if( !t.getObtainedMarks().equalsIgnoreCase("na")) {
+				else if( !t.getObtainedMarks().equalsIgnoreCase("na") && !t.getObtainedMarks().equalsIgnoreCase("n")) {
 					ob += Float.parseFloat(t.getObtainedMarks());
 					total += t.getMaxMarks();
 				}
@@ -599,7 +604,7 @@ public class TestAutomation implements ActionListener, ItemListener {
 			
 			if( per <= 50 )
 				below50.put((String)mapElement.getKey(), tests);
-			else if (per <= 60)
+			else if (per <= 60 && per > 50)
 				below60.put((String)mapElement.getKey(), tests);
 			else
 				toppers.put((String)mapElement.getKey(), tests);
@@ -644,7 +649,7 @@ public class TestAutomation implements ActionListener, ItemListener {
 			@Override
 			public void windowClosing(WindowEvent e) {
 				parentFrame.setVisible(true);
-
+				typeOfCell.clear();
 			}
 
 			@Override
@@ -793,7 +798,9 @@ public class TestAutomation implements ActionListener, ItemListener {
 							CellValue cellValue = formulaEvaluator.evaluate(cell);
 							if (c == 0) {
 								try {
-									name = "" + cellValue.getStringValue();
+									name = cellValue.getStringValue();
+									if(name.equals(""))
+										break;
 								} catch (Exception ex) {
 									break;
 								}
@@ -859,7 +866,7 @@ public class TestAutomation implements ActionListener, ItemListener {
 			for (Iterator k = tests.iterator(); k.hasNext(); i++) {
 				TestBean t = (TestBean) k.next();
 				row[i] = t.getObtainedMarks();
-				if (row[i].equalsIgnoreCase("ab")) {
+				if (row[i].equalsIgnoreCase("ab") || row[i].equalsIgnoreCase("a") || row[i].equalsIgnoreCase("b")) {
 					total += t.getMaxMarks();
 					row[i] = row[i].toUpperCase();
 
@@ -871,7 +878,7 @@ public class TestAutomation implements ActionListener, ItemListener {
 						typeOfCell.put("ab", arr);
 					}
 
-				} else if (row[i].equalsIgnoreCase("na")) {
+				} else if (row[i].equalsIgnoreCase("na") || row[i].equalsIgnoreCase("n")) {
 					row[i] = "";
 
 					if (typeOfCell.containsKey("na")) {
@@ -887,7 +894,7 @@ public class TestAutomation implements ActionListener, ItemListener {
 						ob = ob + Float.parseFloat(row[i]);
 						total += t.getMaxMarks();
 
-						if (Float.parseFloat(row[i]) < t.getThresholdMarks()) {
+						if (Float.parseFloat(row[i]) <= t.getThresholdMarks()) {
 							if (typeOfCell.containsKey("th")) {
 								typeOfCell.get("th").add(new CellLocation(rowNum, i));
 							} else {
@@ -907,7 +914,7 @@ public class TestAutomation implements ActionListener, ItemListener {
 			}
 			total = (ob / total);
 			per = (int) (total * 100);
-			row[1] = String.valueOf(per + "%");
+			row[1] = String.valueOf(per)+"%";
 			if (per <= 50) {
 				if (typeOfCell.containsKey("50")) {
 					typeOfCell.get("50").add(new CellLocation(rowNum, 1));
@@ -916,7 +923,7 @@ public class TestAutomation implements ActionListener, ItemListener {
 					arr.add(new CellLocation(rowNum, 1));
 					typeOfCell.put("50", arr);
 				}
-			} else if (per <= 60) {
+			} else if (per <= 60 && per > 50) {
 				if (typeOfCell.containsKey("60")) {
 					typeOfCell.get("60").add(new CellLocation(rowNum, 1));
 				} else {
