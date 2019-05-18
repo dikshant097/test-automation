@@ -1,5 +1,6 @@
 import java.awt.*;
 import java.awt.event.*;
+import java.awt.print.PrinterException;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -18,6 +19,7 @@ import java.util.Iterator;
 import javax.swing.*;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableColumn;
 import javax.swing.table.TableColumnModel;
 
 import org.apache.poi.ss.usermodel.Cell;
@@ -578,7 +580,7 @@ public class TestAutomation implements ActionListener, ItemListener {
 		tbl.setRowHeight(30);
 		tbl.setModel(dtm);
 		
-		TreeMap<String, TreeSet<TestBean>> below50 = new TreeMap<>() ,below60 = new TreeMap<>() ,toppers = new TreeMap<>() ;
+		TreeMap<String, TreeSet<TestBean>> below50 = new TreeMap<>() ,below40 = new TreeMap<>(), below60 = new TreeMap<>() ,toppers = new TreeMap<>() ;
 		for (Map.Entry mapElement : result.entrySet()) {
 			
 			float total = 0.0f, ob = 0.0f;
@@ -602,7 +604,9 @@ public class TestAutomation implements ActionListener, ItemListener {
 			
 			
 			
-			if( per <= 50 )
+			if( per <= 40 )
+				below40.put((String)mapElement.getKey(), tests);
+			else if(per <= 50 && per > 40)
 				below50.put((String)mapElement.getKey(), tests);
 			else if (per <= 60 && per > 50)
 				below60.put((String)mapElement.getKey(), tests);
@@ -610,12 +614,23 @@ public class TestAutomation implements ActionListener, ItemListener {
 				toppers.put((String)mapElement.getKey(), tests);
 		}
 		
-		if(toppers.size() != 0)
+		int len = 0;
+		if(toppers != null && toppers.size() != 0) {
 			makeRows(toppers,testCols,dtm,0);
-		if(below60.size() != 0)
-			makeRows(below60,testCols,dtm,toppers.size());
-		if(below50.size() != 0)
-			makeRows(below50,testCols,dtm,below60.size() + toppers.size());
+			len+=toppers.size();
+		}
+		if(below60 != null && below60.size() != 0) {
+			makeRows(below60,testCols,dtm,len);
+			len+=below60.size();
+		}
+		if(below50 != null && below50.size() != 0) {
+			makeRows(below50,testCols,dtm,len);
+			len+=below50.size();
+		}
+		if(below40 != null && below40.size() != 0) {
+			makeRows(below40,testCols,dtm,len);
+			len+=below40.size();
+		}
 		
 		
 		for(int j=0 ;j < tbl.getColumnModel().getColumnCount() ; j++)
@@ -685,6 +700,18 @@ public class TestAutomation implements ActionListener, ItemListener {
 		});
 
 		performanceFrame.setVisible(true);
+		
+		
+		/*try {
+		
+			tbl.print();
+			
+		} catch (PrinterException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}*/
+		
+		
 	}
 
 	public static void openCreateTestFrame() {
@@ -798,7 +825,7 @@ public class TestAutomation implements ActionListener, ItemListener {
 							CellValue cellValue = formulaEvaluator.evaluate(cell);
 							if (c == 0) {
 								try {
-									name = cellValue.getStringValue();
+									name = cellValue.getStringValue().trim();
 									if(name.equals(""))
 										break;
 								} catch (Exception ex) {
@@ -852,12 +879,14 @@ public class TestAutomation implements ActionListener, ItemListener {
 	
 	public static void makeRows(TreeMap<String, TreeSet<TestBean>> result, String testCols[], DefaultTableModel dtm, int rowNum)
 	{
-		 
+		 int sno = 1;
 		for (Map.Entry mapElement : result.entrySet()) {
 			
 			String row[] = new String[testCols.length];
 			int i = 0;
 			row[i] = ((String) mapElement.getKey()).toUpperCase();
+			row[i] = String.valueOf(sno) + ". " + row[i];
+			sno++;
 			i += 2;
 			float total = 0.0f, ob = 0.0f;
 			int per;
@@ -915,7 +944,17 @@ public class TestAutomation implements ActionListener, ItemListener {
 			total = (ob / total);
 			per = (int) (total * 100);
 			row[1] = String.valueOf(per)+"%";
-			if (per <= 50) {
+			if (per <= 40) {
+				if (typeOfCell.containsKey("40")) {
+					typeOfCell.get("40").add(new CellLocation(rowNum, 1));
+				} else {
+					ArrayList<CellLocation> arr = new ArrayList<>();
+					arr.add(new CellLocation(rowNum, 1));
+					typeOfCell.put("40", arr);
+				}
+			} 
+			else if( per > 40 && per <=50 )
+			{
 				if (typeOfCell.containsKey("50")) {
 					typeOfCell.get("50").add(new CellLocation(rowNum, 1));
 				} else {
@@ -923,7 +962,8 @@ public class TestAutomation implements ActionListener, ItemListener {
 					arr.add(new CellLocation(rowNum, 1));
 					typeOfCell.put("50", arr);
 				}
-			} else if (per <= 60 && per > 50) {
+			}
+			else if (per <= 60 && per > 50) {
 				if (typeOfCell.containsKey("60")) {
 					typeOfCell.get("60").add(new CellLocation(rowNum, 1));
 				} else {

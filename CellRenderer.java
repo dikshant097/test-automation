@@ -18,7 +18,7 @@ import javax.swing.table.DefaultTableCellRenderer;
  * */
 public class CellRenderer extends DefaultTableCellRenderer {
 
-	private ArrayList<CellLocation> na, ab, below50, below60, th;
+	private ArrayList<CellLocation> na, ab, below40, below50, below60, th;
 
 	public CellRenderer(HashMap<String, ArrayList<CellLocation>> typeOfCell) {
 		if (typeOfCell.containsKey("ab"))
@@ -30,6 +30,9 @@ public class CellRenderer extends DefaultTableCellRenderer {
 		if (typeOfCell.containsKey("th"))
 			th = typeOfCell.get("th");
 
+		if (typeOfCell.containsKey("40"))
+			below40 = typeOfCell.get("40");
+		
 		if (typeOfCell.containsKey("50"))
 			below50 = typeOfCell.get("50");
 
@@ -51,27 +54,34 @@ public class CellRenderer extends DefaultTableCellRenderer {
 			l.setBackground(Color.BLACK);
 			l.setForeground(Color.BLACK);
 			setHorizontalAlignment(JLabel.CENTER);
-		}  else if (((String) value).equalsIgnoreCase("ab")) {
+		}  else if ( ab != null && ((String) value).equalsIgnoreCase("ab")) {
 			l.setFont(new Font("SansSerif", Font.BOLD, 13));
 			  l.setBackground(Color.BLUE);
 			  l.setForeground(Color.WHITE);
 			  setHorizontalAlignment(JLabel.CENTER);
 		}
-		else if( below50.contains(new CellLocation(row,column)))
+		else if( below40 !=null && below40.contains(new CellLocation(row,column)))
 		{
 			l.setFont(new Font("SansSerif", Font.BOLD, 13));
 			l.setBackground(Color.RED);
 			l.setForeground(Color.BLACK);
 			setHorizontalAlignment(JLabel.CENTER);
 		}
-		else if( below60.contains(new CellLocation(row,column)))
+		else if( below50!=null && below50.contains(new CellLocation(row,column)))
+		{
+			l.setFont(new Font("SansSerif", Font.BOLD, 13));
+			l.setBackground(Color.decode("#FF8C00"));
+			l.setForeground(Color.BLACK);
+			setHorizontalAlignment(JLabel.CENTER);
+		}
+		else if( below60 != null &&below60.contains(new CellLocation(row,column)))
 		{
 			l.setFont(new Font("SansSerifk", Font.BOLD, 13));
 			l.setBackground(Color.YELLOW);
 			l.setForeground(Color.BLACK);
 			setHorizontalAlignment(JLabel.CENTER);
 		}
-		else if( th.contains(new CellLocation(row,column)))
+		else if( th != null && th.contains(new CellLocation(row,column)))
 		{
 			l.setFont(new Font("SansSerif", Font.BOLD, 13));
 			l.setBackground(Color.RED);
