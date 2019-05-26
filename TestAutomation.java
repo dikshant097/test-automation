@@ -699,18 +699,38 @@ public class TestAutomation implements ActionListener, ItemListener {
 
 		});
 
+		tbl.addMouseListener(new MouseAdapter() {
+		    public void mousePressed(MouseEvent mouseEvent) {
+		        JTable table =(JTable) mouseEvent.getSource();
+		        Point point = mouseEvent.getPoint();
+		        int row = table.rowAtPoint(point);
+		        if (mouseEvent.getClickCount() == 2 && table.getSelectedRow() != -1) {
+		        	String nameWithSerial = (String) table.getModel().getValueAt(row,0);
+		        	String per = (String) table.getModel().getValueAt(row,1);
+		        	nameWithSerial = nameWithSerial.trim();
+		        	String name="";
+		        	int i=0;
+		        	for( i = 0;i <nameWithSerial.length();i++)
+		        		if(nameWithSerial.charAt(i) < 'A')
+		        			continue;
+		        		else
+		        			break;
+		        	for(;i<nameWithSerial.length();i++)
+		        		name+= Character.toString(nameWithSerial.charAt(i));
+		        	
+		        	TreeSet<TestBean> tests = result.get(name);
+		        	for (Iterator k = tests.iterator(); k.hasNext(); i++) {
+						TestBean t = (TestBean) k.next();
+						
+		        	}
+		        	
+		        	
+		        }
+		        	
+		    }
+		});
+		
 		performanceFrame.setVisible(true);
-		
-		
-		/*try {
-		
-			tbl.print();
-			
-		} catch (PrinterException e1) {
-			// TODO Auto-generated catch block
-			e1.printStackTrace();
-		}*/
-		
 		
 	}
 
